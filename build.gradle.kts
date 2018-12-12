@@ -27,8 +27,11 @@ dependencies {
     compile("io.vertx:vertx-web:${vertxVersion}")
     compile("io.vertx:vertx-web-client:${vertxVersion}")
     compile("io.vertx:vertx-config:${vertxVersion}")
+    compile("io.vertx:vertx-mysql-postgresql-client:${vertxVersion}")
     compile("org.jsoup:jsoup:1.11.3")
-    testCompile("org.jetbrains.kotlin:kotlin-test-junit:${kotlinVersion}")
+    compile("ch.qos.logback:logback-classic:1.2.3")
+    compile("org.apache.logging.log4j:log4j-to-slf4j:2.11.1")
+    compile("org.slf4j:jul-to-slf4j:1.7.25")
     testCompile("junit:junit:${junitVersion}")
     testCompile("org.jetbrains.kotlin:kotlin-test:${kotlinVersion}")
 }
