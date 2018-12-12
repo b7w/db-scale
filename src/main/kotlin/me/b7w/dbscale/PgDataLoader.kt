@@ -18,6 +18,12 @@ class PgDataLoader(val client: AsyncSQLClient) {
         return client.querySingleAwait("DELETE FROM users")
     }
 
+    suspend fun insertUser(): JsonArray? {
+        val params = JsonArray(UUID.randomUUID(), Random.nextLong(999999999999999999L))
+        return client.querySingleWithParamsAwait("INSERT INTO users VALUES (?, ?)", params)
+    }
+
+
     suspend fun insertUsers(count: Long): String = coroutineScope {
         val connection = client.getConnectionAwait()
         connection.setAutoCommitAwait(false)

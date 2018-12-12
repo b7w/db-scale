@@ -35,7 +35,7 @@ fun main(args: Array<String>) {
 
             router.route("/pg/users/count").handler { context ->
                 launch(vertx.dispatcher()) {
-                    LOG.info("/pg/users/count")
+                    LOG.trace("/pg/users/count")
                     val result = PgDataLoader(pgClient).countUsers()
 
                     context.response().end(Json.encodePrettily(result))
@@ -44,8 +44,17 @@ fun main(args: Array<String>) {
 
             router.route("/pg/users/delete").handler { context ->
                 launch(vertx.dispatcher()) {
-                    LOG.info("/pg/users/delete")
+                    LOG.trace("/pg/users/delete")
                     val result = PgDataLoader(pgClient).deleteUsers()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/pg/users/insert").handler { context ->
+                launch(vertx.dispatcher()) {
+                    LOG.trace("/pg/users/insert")
+                    val result = PgDataLoader(pgClient).insertUser()
 
                     context.response().end(Json.encodePrettily(result))
                 }
@@ -54,13 +63,10 @@ fun main(args: Array<String>) {
             router.route("/pg/users/insert/:count").handler { context ->
                 val count = context.request().getParam("count").toLong()
                 launch(vertx.dispatcher()) {
-                    LOG.info("/pg/users/insert/:count")
-                    val loader = PgDataLoader(pgClient)
-                    val result = loader.insertUsers(count)
+                    LOG.trace("/pg/users/insert/:count")
+                    val result = PgDataLoader(pgClient).insertUsers(count)
 
-                    val response = context.response()
-                    response.putHeader("changelog-type", "text/plain")
-                    response.end(Json.encodePrettily(result))
+                    context.response().end(Json.encodePrettily(result))
                 }
             }
 
