@@ -7,7 +7,7 @@ plugins {
 group = "me.b7w"
 version = "1.0-SNAPSHOT"
 
-val kotlinVersion by extra("1.3.0")
+val kotlinVersion by extra("1.3.11")
 val vertxVersion by extra("3.6.0")
 val junitVersion by extra("4.12")
 
