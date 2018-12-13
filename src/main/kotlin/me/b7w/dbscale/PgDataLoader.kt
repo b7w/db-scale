@@ -1,41 +1,75 @@
 package me.b7w.dbscale
 
-import io.vertx.core.json.JsonArray
-import io.vertx.ext.asyncsql.AsyncSQLClient
-import io.vertx.kotlin.core.json.JsonArray
-import io.vertx.kotlin.ext.sql.*
-import kotlinx.coroutines.coroutineScope
+import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgRowSet
+import io.reactiverse.pgclient.PgTransaction
+import io.reactiverse.pgclient.Tuple
+import io.vertx.kotlin.coroutines.awaitResult
 import java.util.*
 import kotlin.random.Random
 
-class PgDataLoader(val client: AsyncSQLClient) {
 
-    suspend fun countUsers(): JsonArray? {
-        return client.querySingleAwait("SELECT COUNT(id) FROM users")
+suspend fun PgPool.begin(): PgTransaction {
+    return awaitResult {
+        this.begin(it)
+    }
+}
+
+suspend fun PgPool.queryAwait(sql: String): PgRowSet {
+    return awaitResult {
+        this.query(sql, it)
+    }
+}
+
+suspend fun PgPool.preparedQueryAwait(sql: String, arguments: Tuple): PgRowSet {
+    return awaitResult {
+        this.preparedQuery(sql, arguments, it)
+    }
+}
+
+suspend fun PgTransaction.preparedBatchAwait(sql: String, batch: List<Tuple>): PgRowSet {
+    return awaitResult {
+        this.preparedBatch(sql, batch, it)
+    }
+}
+
+
+suspend fun PgTransaction.commitAwait() {
+    awaitResult<Void> {
+        this.commit(it)
+    }
+}
+
+
+class PgDataLoaderNew(val client: PgPool) {
+
+    suspend fun countUsers(): PgRowSet {
+        return client.queryAwait("SELECT COUNT(id) FROM users")
     }
 
-    suspend fun deleteUsers(): JsonArray? {
-        return client.querySingleAwait("DELETE FROM users")
+    suspend fun deleteUsers(): PgRowSet {
+        return client.queryAwait("DELETE FROM users")
     }
 
-    suspend fun insertUser(): JsonArray? {
-        val params = JsonArray(UUID.randomUUID(), Random.nextLong(999999999999999999L))
-        return client.querySingleWithParamsAwait("INSERT INTO users VALUES (?, ?)", params)
+    suspend fun insertUser(): PgRowSet {
+        val params = createUser()
+        return client.preparedQueryAwait("INSERT INTO users VALUES ($1, $2)", params)
     }
 
 
-    suspend fun insertUsers(count: Long): String = coroutineScope {
-        val connection = client.getConnectionAwait()
-        connection.setAutoCommitAwait(false)
-        for (i in 1..count) {
-            val params = JsonArray(UUID.randomUUID(), Random.nextLong(999999999999999999L))
-            LOG.trace("Insert params: {}", params)
-            connection.querySingleWithParamsAwait("INSERT INTO users VALUES (?, ?)", params)
+    suspend fun insertUsers(count: Long): Pair<Boolean, String> {
+        val tx = client.begin()
+        return try {
+            val params = range(count, start = 1).map { createUser() }
+            val rowSet = tx.preparedBatchAwait("INSERT INTO users VALUES ($1, $2)", params)
+            tx.commitAwait()
+            Pair(true, "Success ${rowSet.size()}")
+        } catch (e: Exception) {
+            tx.rollback()
+            Pair(false, "Error: ${e.message}")
         }
-        connection.commitAwait()
-        connection.setAutoCommitAwait(true)
-        connection.closeAwait()
-        return@coroutineScope "Success $count"
     }
+
+    private fun createUser() = Tuple.of(UUID.randomUUID(), Random.nextLong(999999999999999999L).toString())
 
 }

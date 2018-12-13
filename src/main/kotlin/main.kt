@@ -1,13 +1,13 @@
+import io.reactiverse.kotlin.pgclient.PgPoolOptions
+import io.reactiverse.pgclient.PgClient
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
-import io.vertx.ext.asyncsql.PostgreSQLClient
 import io.vertx.ext.web.Router
-import io.vertx.kotlin.core.json.JsonObject
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
 import me.b7w.dbscale.LOG
-import me.b7w.dbscale.PgDataLoader
+import me.b7w.dbscale.PgDataLoaderNew
 
 
 fun main(args: Array<String>) {
@@ -15,19 +15,15 @@ fun main(args: Array<String>) {
     System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory")
 
     val vertx = Vertx.vertx()
-    val pgClient = PostgreSQLClient.createShared(
-        vertx, JsonObject(
-            "host" to "rc1a-bfb85etuy0q2tg34.mdb.yandexcloud.net",
-            "port" to 6432,
-            "database" to "root",
-            "username" to "root",
-            "password" to "q1w2e3r4",
-            "maxPoolSize" to 36,
-            "sslMode" to "verify-full",
-            "sslRootCert" to "/Users/B7W/.postgresql/root.crt"
-        )
-    )
-    pgClient.LOG.info("Done PG client setup")
+    val options = PgPoolOptions()
+        .setPort(5432)
+        .setHost("127.0.0.1")
+        .setDatabase("root")
+        .setUser("root")
+        .setPassword("root")
+        .setCachePreparedStatements(true)
+        .setMaxSize(10)
+    val pgPool = PgClient.pool(options)
 
     class HttpServerVerticle : CoroutineVerticle() {
         override suspend fun start() {
@@ -36,7 +32,7 @@ fun main(args: Array<String>) {
             router.route("/pg/users/count").handler { context ->
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/count")
-                    val result = PgDataLoader(pgClient).countUsers()
+                    val result = PgDataLoaderNew(pgPool).countUsers()
 
                     context.response().end(Json.encodePrettily(result))
                 }
@@ -45,7 +41,7 @@ fun main(args: Array<String>) {
             router.route("/pg/users/delete").handler { context ->
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/delete")
-                    val result = PgDataLoader(pgClient).deleteUsers()
+                    val result = PgDataLoaderNew(pgPool).deleteUsers()
 
                     context.response().end(Json.encodePrettily(result))
                 }
@@ -54,7 +50,7 @@ fun main(args: Array<String>) {
             router.route("/pg/users/insert").handler { context ->
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/insert")
-                    val result = PgDataLoader(pgClient).insertUser()
+                    val result = PgDataLoaderNew(pgPool).insertUser()
 
                     context.response().end(Json.encodePrettily(result))
                 }
@@ -64,9 +60,12 @@ fun main(args: Array<String>) {
                 val count = context.request().getParam("count").toLong()
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/insert/:count")
-                    val result = PgDataLoader(pgClient).insertUsers(count)
-
-                    context.response().end(Json.encodePrettily(result))
+                    val (code, msg) = PgDataLoaderNew(pgPool).insertUsers(count)
+                    if (code) {
+                        context.response().end(Json.encodePrettily(msg))
+                    } else {
+                        context.response().setStatusCode(500).end(msg)
+                    }
                 }
             }
 
