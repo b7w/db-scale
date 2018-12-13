@@ -1,11 +1,13 @@
-import io.reactiverse.kotlin.pgclient.PgPoolOptions
 import io.reactiverse.pgclient.PgClient
+import io.vertx.config.ConfigRetriever
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import me.b7w.dbscale.Config
 import me.b7w.dbscale.LOG
 import me.b7w.dbscale.PgDataLoaderNew
 
@@ -15,14 +17,11 @@ fun main(args: Array<String>) {
     System.setProperty("vertx.logger-delegate-factory-class-name", "io.vertx.core.logging.SLF4JLogDelegateFactory")
 
     val vertx = Vertx.vertx()
-    val options = PgPoolOptions()
-        .setPort(5432)
-        .setHost("127.0.0.1")
-        .setDatabase("root")
-        .setUser("root")
-        .setPassword("root")
-        .setCachePreparedStatements(true)
-        .setMaxSize(10)
+    val config = Config(ConfigRetriever.create(vertx))
+
+    val options = runBlocking(vertx.dispatcher()) {
+        config.pg()
+    }
     val pgPool = PgClient.pool(options)
 
     class HttpServerVerticle : CoroutineVerticle() {

@@ -1,0 +1,11 @@
+{
+    "pg": {
+        "port": 5432,
+        "host": "127.0.0.1",
+        "database": "root",
+        "user": "root",
+        "password": "root",
+        "cachePreparedStatements": true,
+        "maxSize": 10
+    }
+}

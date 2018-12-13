@@ -5,6 +5,12 @@ db-scale
 Project for benchmark research
 
 
+Run
+---
+
+Add `VERTX_CONFIG_PATH=etc/config.json` to ENV before run
+
+
 About
 -----
 
