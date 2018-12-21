@@ -28,6 +28,15 @@ fun main(args: Array<String>) {
         override suspend fun start() {
             val router = Router.router(vertx)
 
+            router.route("/pg/users/select").handler { context ->
+                launch(vertx.dispatcher()) {
+                    LOG.trace("/pg/users/select")
+                    val result = PgDataLoaderNew(pgPool).select()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
             router.route("/pg/users/count").handler { context ->
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/count")

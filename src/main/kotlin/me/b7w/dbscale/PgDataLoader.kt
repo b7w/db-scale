@@ -40,8 +40,18 @@ suspend fun PgTransaction.commitAwait() {
     }
 }
 
+private var CACHE_USERS = listOf<UUID>()
 
 class PgDataLoaderNew(val client: PgPool) {
+
+    suspend fun select(): PgRowSet {
+        if (CACHE_USERS.isEmpty()) {
+            CACHE_USERS = client
+                .preparedQueryAwait("SELECT * FROM users", Tuple.tuple())
+                .map { it.getUUID("id") }
+        }
+        return client.preparedQueryAwait("SELECT * FROM users WHERE id=$1", Tuple.of(CACHE_USERS.random()))
+    }
 
     suspend fun countUsers(): PgRowSet {
         return client.queryAwait("SELECT COUNT(id) FROM users")
