@@ -1,0 +1,73 @@
+---
+- name: Setup VM
+  hosts: all
+  gather_facts: true
+  vars:
+      - cockroachdb_version: '2.1.3'
+  tasks:
+      - name: Kill
+        ignore_errors: yes
+        shell: 'pkill cockroach'
+        tags:
+            - clear
+
+      - name: Rm -data
+        shell: 'rm -rf /home/b7w/*'
+        tags:
+            - clear
+
+      - name: Test
+        debug:
+            msg: 'https://binaries.cockroachdb.com/cockroach-v{{ cockroachdb_version }}.linux-amd64.tgz'
+
+      - name: Download
+        get_url:
+            url: 'https://binaries.cockroachdb.com/cockroach-v2.1.3.linux-amd64.tgz'
+            dest: '/home/b7w/cockroach.tgz'
+
+      - name: Unarchive
+        unarchive:
+            src: '/home/b7w/cockroach.tgz'
+            dest: '/home/b7w'
+            remote_src: yes
+
+      - name: Copy to bin
+        become: yes
+        copy:
+            src: 'cockroach-v{{ cockroachdb_version }}.linux-amd64/cockroach'
+            dest: '/usr/local/bin/cockroach'
+            remote_src: yes
+            mode: a+x
+
+
+- name: Run cluster
+  hosts: all
+  gather_facts: false
+  vars:
+      - hosts: '{{ hostvars[inventory_hostname].groups.all | join(",") }}'
+  tasks:
+      - name: Pgrep cockroach
+        command: 'pgrep cockroach'
+        register: pgrep
+        ignore_errors: yes
+
+      - name: Test
+        debug:
+            msg: 'cockroach start --insecure --listen-addr=0.0.0.0 --advertise-addr={{ inventory_hostname }} --join={{ hosts }} --background'
+
+      - name: Start cockroach
+        shell: 'cockroach start --insecure --listen-addr=0.0.0.0 --advertise-addr={{ inventory_hostname }} --join={{ hosts }} --background'
+        when: pgrep.failed
+
+
+- name: Init
+  hosts: all[0]
+  gather_facts: false
+  tasks:
+      - name: Waite
+        pause:
+            seconds: 64
+
+      - name: Cockroach init
+        shell: 'cockroach init --insecure'
+        ignore_errors: yes

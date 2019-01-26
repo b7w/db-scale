@@ -30,8 +30,9 @@ fun main(args: Array<String>) {
     background.executeBlocking<Unit>({
         LOG.info("Start cache users")
         val time = measureTimeMillis {
-            usersCache = config.usersCache()
-                .readLines()
+            if (config.usersCache().exists()) {
+                usersCache = config.usersCache().readLines()
+            }
         }
         LOG.info("Cache ${usersCache.size} users in ${time}ms")
     }, {
@@ -44,9 +45,19 @@ fun main(args: Array<String>) {
         PgClient.pool(PgPoolOptions(json))
     }
 
+    background.executeBlocking<Unit>({
+        clients.forEach {
+            runBlocking(vertx.dispatcher()) {
+                val count = PgDataLoaderNew(it).countUsers()
+                LOG.info("Users count on ${it} is ${Json.encodePrettily(count)}")
+            }
+        }
+    }, {})
+
     class HttpServerVerticle : CoroutineVerticle() {
         override suspend fun start() {
             val router = Router.router(vertx)
+
 
             router.route("/pg/users/select").handler { context ->
                 launch(vertx.dispatcher()) {
