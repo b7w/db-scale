@@ -4,3 +4,4 @@
 
 target/
 etc/*-local.*
+playbook-*.retry

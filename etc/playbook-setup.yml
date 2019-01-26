@@ -1,0 +1,31 @@
+---
+- name: Setup VM
+  hosts: all
+  gather_facts: true
+  vars:
+      - docker_compose_version: '1.21.2'
+
+  tasks:
+      - name: Update and upgrade
+        become: yes
+        apt:
+            upgrade: yes
+            update_cache: yes
+
+      - name: Install utils
+        become: yes
+        apt:
+            name: '{{ item }}'
+            state: present
+
+        with_items:
+            - 'fish'
+            - 'htop'
+            - 'vim'
+            - 'unzip'
+            - 'git'
+            - 'jq'
+            - 'python3-pip'
+            - 'apt-transport-https'
+            - 'ca-certificates'
+            - 'software-properties-common'
