@@ -86,10 +86,19 @@ fun main(args: Array<String>) {
                 }
             }
 
+            router.route("/pg/users/truncate").handler { context ->
+                launch(vertx.dispatcher()) {
+                    LOG.trace("/pg/users/delete")
+                    val result = PgDataLoaderNew(clients.first()).truncateUsers()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
             router.route("/pg/users/insert").handler { context ->
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/insert")
-                    val result = PgDataLoaderNew(clients.first()).insertUser()
+                    val result = PgDataLoaderNew(clients.random()).insertUser()
 
                     context.response().end(Json.encodePrettily(result))
                 }
@@ -99,7 +108,7 @@ fun main(args: Array<String>) {
                 val count = context.request().getParam("count").toLong()
                 launch(vertx.dispatcher()) {
                     LOG.trace("/pg/users/insert/:count")
-                    val (code, msg) = PgDataLoaderNew(clients.first()).insertUsers(count)
+                    val (code, msg) = PgDataLoaderNew(clients.random()).insertUsers(count)
                     if (code) {
                         context.response().end(Json.encodePrettily(msg))
                     } else {
