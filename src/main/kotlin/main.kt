@@ -5,12 +5,12 @@ import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.Router
-import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.b7w.dbscale.Config
-import me.b7w.dbscale.PgDataLoaderNew
+import me.b7w.dbscale.verticle.PgGenerator
+import me.b7w.dbscale.verticle.PgVerticle
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
 
@@ -46,81 +46,21 @@ fun main(args: Array<String>) {
     }
 
     background.executeBlocking<Unit>({
+        runBlocking(vertx.dispatcher()) {
+            PgGenerator(clients.first(), AtomicInteger()).createTables()
+        }
         clients.forEach {
             runBlocking(vertx.dispatcher()) {
-                val count = PgDataLoaderNew(it).countUsers()
+                val count = PgGenerator(it, AtomicInteger()).countUsers()
                 LOG.info("Users count on ${it} is ${Json.encodePrettily(count)}")
             }
         }
     }, {})
 
-    class HttpServerVerticle : CoroutineVerticle() {
-        override suspend fun start() {
-            val router = Router.router(vertx)
+    val router = Router.router(vertx)
 
-
-            router.route("/pg/users/select").handler { context ->
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/select")
-                    val result = PgDataLoaderNew(clients.random()).select(usersCache)
-
-                    context.response().end(Json.encodePrettily(result))
-                }
-            }
-
-            router.route("/pg/users/count").handler { context ->
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/count")
-                    val result = PgDataLoaderNew(clients.random()).countUsers()
-
-                    context.response().end(Json.encodePrettily(result))
-                }
-            }
-
-            router.route("/pg/users/delete").handler { context ->
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/delete")
-                    val result = PgDataLoaderNew(clients.first()).deleteUsers()
-
-                    context.response().end(Json.encodePrettily(result))
-                }
-            }
-
-            router.route("/pg/users/truncate").handler { context ->
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/delete")
-                    val result = PgDataLoaderNew(clients.first()).truncateUsers()
-
-                    context.response().end(Json.encodePrettily(result))
-                }
-            }
-
-            router.route("/pg/users/insert").handler { context ->
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/insert")
-                    val result = PgDataLoaderNew(clients.random()).insertUser()
-
-                    context.response().end(Json.encodePrettily(result))
-                }
-            }
-
-            router.route("/pg/users/insert/:count").handler { context ->
-                val count = context.request().getParam("count").toLong()
-                launch(vertx.dispatcher()) {
-                    LOG.trace("/pg/users/insert/:count")
-                    val (code, msg) = PgDataLoaderNew(clients.random()).insertUsers(count)
-                    if (code) {
-                        context.response().end(Json.encodePrettily(msg))
-                    } else {
-                        context.response().setStatusCode(500).end(msg)
-                    }
-                }
-            }
-
-            vertx.createHttpServer().requestHandler(router).listen(8080)
-        }
-    }
-    vertx.deployVerticle(HttpServerVerticle())
+    vertx.deployVerticle(PgVerticle(router, clients))
+    vertx.createHttpServer().requestHandler(router).listen(8080)
 
 }
 

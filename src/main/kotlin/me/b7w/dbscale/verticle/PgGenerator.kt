@@ -1,18 +1,34 @@
-package me.b7w.dbscale
+package me.b7w.dbscale.verticle
 
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgRowSet
 import io.reactiverse.pgclient.Tuple
+import me.b7w.dbscale.*
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 
-class PgDataLoaderNew(val client: PgPool) {
+class PgGenerator(val client: PgPool, val counter: AtomicInteger) {
 
-    suspend fun select(usersCache: List<String>): PgRowSet {
+    suspend fun createTables(): PgRowSet {
+        LOG.info("Create tables")
+        return client.queryAwait(
+            """
+            CREATE TABLE IF NOT EXISTS users(
+                id VARCHAR(64) PRIMARY KEY,
+                username VARCHAR(64) UNIQUE NOT NULL,
+                desertion VARCHAR(256) UNIQUE NOT NULL
+            );
+            """
+        )
+    }
+
+    suspend fun select(): PgRowSet {
+        val id = Random.nextInt(counter.get()).toString()
         return client.preparedQueryAwait(
             "SELECT * FROM users WHERE id=$1",
-            Tuple.of(UUID.fromString(usersCache.random()))
+            Tuple.of(id)
         )
     }
 
@@ -30,14 +46,14 @@ class PgDataLoaderNew(val client: PgPool) {
 
     suspend fun insertUser(): PgRowSet {
         val params = createUser()
-        return client.preparedQueryAwait("INSERT INTO users VALUES ($1, $2)", params)
+        return client.preparedQueryAwait("INSERT INTO users VALUES ($1, $2, $3)", params)
     }
 
     suspend fun insertUsers(count: Long): Pair<Boolean, String> {
         val tx = client.begin()
         return try {
             val params = range(count, start = 1).map { createUser() }
-            val rowSet = tx.preparedBatchAwait("INSERT INTO users VALUES ($1, $2)", params)
+            val rowSet = tx.preparedBatchAwait("INSERT INTO users VALUES ($1, $2, $3)", params)
             tx.commitAwait()
             Pair(true, "Success ${rowSet.size()}")
         } catch (e: Exception) {
@@ -46,6 +62,10 @@ class PgDataLoaderNew(val client: PgPool) {
         }
     }
 
-    private fun createUser() = Tuple.of(UUID.randomUUID(), Random.nextLong(999999999999999999L).toString())
+    private fun createUser() = Tuple.of(
+        counter.getAndIncrement().toString(),
+        UUID.randomUUID().toString(),
+        Random.nextLong(999999999999999999L).toString()
+    )
 
 }
