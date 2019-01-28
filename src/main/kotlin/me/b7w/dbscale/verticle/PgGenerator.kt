@@ -36,10 +36,6 @@ class PgGenerator(val client: PgPool, val counter: AtomicInteger) {
         return client.queryAwait("SELECT COUNT(id) FROM users")
     }
 
-    suspend fun deleteUsers(): PgRowSet {
-        return client.queryAwait("DELETE FROM users")
-    }
-
     suspend fun truncateUsers(): PgRowSet {
         return client.queryAwait("TRUNCATE TABLE users CASCADE;")
     }

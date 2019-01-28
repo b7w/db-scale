@@ -1,22 +1,33 @@
 package me.b7w.dbscale.verticle
 
-import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgClient
+import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
+import me.b7w.dbscale.Properties
 import java.util.concurrent.atomic.AtomicInteger
 
-class CockroachVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerticle() {
-
-    val counter = AtomicInteger(1)
+class CockroachVerticle(val properties: Properties, val router: Router) : CoroutineVerticle() {
 
     override suspend fun start() {
 
+        val options = properties.cockroach()
+
+        val clients = options.host.split(",").map {
+            val json = options.toJson().put("host", it)
+            PgClient.pool(PgPoolOptions(json))
+        }
+        val counter = AtomicInteger(0)
+        val factory = { PgGenerator(clients.random(), counter) }
+
+        factory().createTables()
+
         router.route("/cockroach/users/count").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).countUsers()
+                val result = factory().countUsers()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -24,7 +35,7 @@ class CockroachVerticle(val router: Router, val clients: List<PgPool>) : Corouti
 
         router.route("/cockroach/users/select/").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).select()
+                val result = factory().select()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -39,17 +50,9 @@ class CockroachVerticle(val router: Router, val clients: List<PgPool>) : Corouti
             }
         }
 
-        router.route("/cockroach/users/delete").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).deleteUsers()
-
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
-
         router.route("/cockroach/users/truncate").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).truncateUsers()
+                val result = factory().truncateUsers()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -57,7 +60,7 @@ class CockroachVerticle(val router: Router, val clients: List<PgPool>) : Corouti
 
         router.route("/cockroach/users/insert").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).insertUser()
+                val result = factory().insertUser()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -66,7 +69,7 @@ class CockroachVerticle(val router: Router, val clients: List<PgPool>) : Corouti
         router.route("/cockroach/users/insert/:count").handler { context ->
             val count = context.request().getParam("count").toLong()
             launch(vertx.dispatcher()) {
-                val (code, msg) = PgGenerator(clients.random(), counter).insertUsers(count)
+                val (code, msg) = factory().insertUsers(count)
                 if (code) {
                     context.response().end(Json.encodePrettily(msg))
                 } else {

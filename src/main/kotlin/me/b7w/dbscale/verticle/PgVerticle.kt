@@ -1,22 +1,32 @@
 package me.b7w.dbscale.verticle
 
-import io.reactiverse.pgclient.PgPool
+import io.reactiverse.pgclient.PgClient
+import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
+import me.b7w.dbscale.Properties
 import java.util.concurrent.atomic.AtomicInteger
 
-class PgVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerticle() {
-
-    val counter = AtomicInteger(1)
+class PgVerticle(val properties: Properties, val router: Router) : CoroutineVerticle() {
 
     override suspend fun start() {
 
+        val options = properties.pg()
+
+        val clients = options.host.split(",").map {
+            val json = options.toJson().put("host", it)
+            PgClient.pool(PgPoolOptions(json))
+        }
+        val master = PgGenerator(clients.first(), AtomicInteger(0))
+
+        master.createTables()
+
         router.route("/pg/users/count").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.first(), counter).countUsers()
+                val result = master.countUsers()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -24,7 +34,7 @@ class PgVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerti
 
         router.route("/pg/users/select/").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), counter).select()
+                val result = PgGenerator(clients.random(), master.counter).select()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -39,17 +49,9 @@ class PgVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerti
             }
         }
 
-        router.route("/pg/users/delete").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.first(), counter).deleteUsers()
-
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
-
         router.route("/pg/users/truncate").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.first(), counter).truncateUsers()
+                val result = master.truncateUsers()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -57,7 +59,7 @@ class PgVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerti
 
         router.route("/pg/users/insert").handler { context ->
             launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.first(), counter).insertUser()
+                val result = master.insertUser()
 
                 context.response().end(Json.encodePrettily(result))
             }
@@ -66,7 +68,7 @@ class PgVerticle(val router: Router, val clients: List<PgPool>) : CoroutineVerti
         router.route("/pg/users/insert/:count").handler { context ->
             val count = context.request().getParam("count").toLong()
             launch(vertx.dispatcher()) {
-                val (code, msg) = PgGenerator(clients.first(), counter).insertUsers(count)
+                val (code, msg) = master.insertUsers(count)
                 if (code) {
                     context.response().end(Json.encodePrettily(msg))
                 } else {
