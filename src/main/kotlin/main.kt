@@ -8,6 +8,7 @@ import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.runBlocking
 import me.b7w.dbscale.Config
+import me.b7w.dbscale.verticle.CockroachVerticle
 import me.b7w.dbscale.verticle.PgGenerator
 import me.b7w.dbscale.verticle.PgVerticle
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,7 +53,7 @@ fun main(args: Array<String>) {
         clients.forEach {
             runBlocking(vertx.dispatcher()) {
                 val count = PgGenerator(it, AtomicInteger()).countUsers()
-                LOG.info("Users count on ${it} is ${Json.encodePrettily(count)}")
+                LOG.info("Users count on $it is ${Json.encodePrettily(count)}")
             }
         }
     }, {})
@@ -60,6 +61,7 @@ fun main(args: Array<String>) {
     val router = Router.router(vertx)
 
     vertx.deployVerticle(PgVerticle(router, clients))
+    vertx.deployVerticle(CockroachVerticle(router, clients))
     vertx.createHttpServer().requestHandler(router).listen(8080)
 
 }
