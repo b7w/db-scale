@@ -27,6 +27,7 @@ dependencies {
     compile("io.vertx:vertx-web:${vertxVersion}")
     compile("io.vertx:vertx-web-client:${vertxVersion}")
     compile("io.vertx:vertx-config:${vertxVersion}")
+    compile("io.vertx:vertx-mongo-client:3.6.2")
     compile("io.reactiverse:reactive-pg-client:0.11.2")
 
     compile("ch.qos.logback:logback-classic:1.2.3")

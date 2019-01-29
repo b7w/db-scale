@@ -16,66 +16,70 @@ class CockroachVerticle(val properties: Properties, val router: Router) : Corout
 
         val options = properties.cockroach()
 
-        val clients = options.host.split(",").map {
-            val json = options.toJson().put("host", it)
-            PgClient.pool(PgPoolOptions(json))
-        }
-        val counter = AtomicInteger(0)
-        val factory = { PgGenerator(clients.random(), counter) }
+        if (options != null) {
 
-        factory().createTables()
-
-        router.route("/cockroach/users/count").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = factory().countUsers()
-
-                context.response().end(Json.encodePrettily(result))
+            val clients = options.host.split(",").map {
+                val json = options.toJson().put("host", it)
+                PgClient.pool(PgPoolOptions(json))
             }
-        }
+            val counter = AtomicInteger(0)
+            val factory = { PgGenerator(clients.random(), counter) }
 
-        router.route("/cockroach/users/select/").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = factory().select()
+            factory().createTables()
 
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
+            router.route("/cockroach/users/count").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = factory().countUsers()
 
-        router.route("/cockroach/users/select/:count").handler { context ->
-            val c = context.request().getParam("count").toInt()
-            launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), AtomicInteger(c)).select()
-
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
-
-        router.route("/cockroach/users/truncate").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = factory().truncateUsers()
-
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
-
-        router.route("/cockroach/users/insert").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = factory().insertUser()
-
-                context.response().end(Json.encodePrettily(result))
-            }
-        }
-
-        router.route("/cockroach/users/insert/:count").handler { context ->
-            val count = context.request().getParam("count").toLong()
-            launch(vertx.dispatcher()) {
-                val (code, msg) = factory().insertUsers(count)
-                if (code) {
-                    context.response().end(Json.encodePrettily(msg))
-                } else {
-                    context.response().setStatusCode(500).end(msg)
+                    context.response().end(Json.encodePrettily(result))
                 }
             }
+
+            router.route("/cockroach/users/select/").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = factory().select()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/cockroach/users/select/:count").handler { context ->
+                val c = context.request().getParam("count").toInt()
+                launch(vertx.dispatcher()) {
+                    val result = PgGenerator(clients.random(), AtomicInteger(c)).select()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/cockroach/users/truncate").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = factory().truncateUsers()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/cockroach/users/insert").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = factory().insertUser()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/cockroach/users/insert/:count").handler { context ->
+                val count = context.request().getParam("count").toLong()
+                launch(vertx.dispatcher()) {
+                    val (code, msg) = factory().insertUsers(count)
+                    if (code) {
+                        context.response().end(Json.encodePrettily(msg))
+                    } else {
+                        context.response().setStatusCode(500).end(msg)
+                    }
+                }
+            }
+
         }
     }
 }

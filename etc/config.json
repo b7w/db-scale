@@ -1,11 +1,36 @@
 {
+    "cockroach2": {
+        "port": 26257,
+        "host": "host1,host2,host3",
+        "database": "defaultdb",
+        "user": "root",
+        "password": "q1w2e3r4",
+        "cachePreparedStatements": true,
+        "maxSize": 16,
+        "ssl": false
+    },
     "pg": {
-        "port": 5432,
-        "host": "127.0.0.1",
+        "port": 6432,
+        "host": "host1,host2,host3",
         "database": "root",
         "user": "root",
-        "password": "root",
+        "password": "q1w2e3r4",
         "cachePreparedStatements": true,
-        "maxSize": 10
+        "maxSize": 10,
+        "ssl": true,
+        "pemTrustOptions": {
+            "certPaths": [
+                "/Users/USER/.postgresql/root.crt"
+            ]
+        }
+    },
+    "mongo": {
+        "db_name": "scale",
+        "host": "host",
+        "port": 27018,
+        "minPoolSize": 25,
+        "maxPoolSize": 50,
+        "username": "scale",
+        "password": "q1w2e3r4"
     }
 }

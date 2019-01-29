@@ -16,65 +16,69 @@ class PgVerticle(val properties: Properties, val router: Router) : CoroutineVert
 
         val options = properties.pg()
 
-        val clients = options.host.split(",").map {
-            val json = options.toJson().put("host", it)
-            PgClient.pool(PgPoolOptions(json))
-        }
-        val master = PgGenerator(clients.first(), AtomicInteger(0))
+        if (options != null) {
 
-        master.createTables()
-
-        router.route("/pg/users/count").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = master.countUsers()
-
-                context.response().end(Json.encodePrettily(result))
+            val clients = options.host.split(",").map {
+                val json = options.toJson().put("host", it)
+                PgClient.pool(PgPoolOptions(json))
             }
-        }
+            val master = PgGenerator(clients.first(), AtomicInteger(0))
 
-        router.route("/pg/users/select/").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), master.counter).select()
+            master.createTables()
 
-                context.response().end(Json.encodePrettily(result))
+            router.route("/pg/users/count").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = master.countUsers()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
             }
-        }
 
-        router.route("/pg/users/select/:count").handler { context ->
-            val c = context.request().getParam("count").toInt()
-            launch(vertx.dispatcher()) {
-                val result = PgGenerator(clients.random(), AtomicInteger(c)).select()
+            router.route("/pg/users/select/").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = PgGenerator(clients.random(), master.counter).select()
 
-                context.response().end(Json.encodePrettily(result))
+                    context.response().end(Json.encodePrettily(result))
+                }
             }
-        }
 
-        router.route("/pg/users/truncate").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = master.truncateUsers()
+            router.route("/pg/users/select/:count").handler { context ->
+                val c = context.request().getParam("count").toInt()
+                launch(vertx.dispatcher()) {
+                    val result = PgGenerator(clients.random(), AtomicInteger(c)).select()
 
-                context.response().end(Json.encodePrettily(result))
+                    context.response().end(Json.encodePrettily(result))
+                }
             }
-        }
 
-        router.route("/pg/users/insert").handler { context ->
-            launch(vertx.dispatcher()) {
-                val result = master.insertUser()
+            router.route("/pg/users/truncate").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = master.truncateUsers()
 
-                context.response().end(Json.encodePrettily(result))
+                    context.response().end(Json.encodePrettily(result))
+                }
             }
-        }
 
-        router.route("/pg/users/insert/:count").handler { context ->
-            val count = context.request().getParam("count").toLong()
-            launch(vertx.dispatcher()) {
-                val (code, msg) = master.insertUsers(count)
-                if (code) {
-                    context.response().end(Json.encodePrettily(msg))
-                } else {
-                    context.response().setStatusCode(500).end(msg)
+            router.route("/pg/users/insert").handler { context ->
+                launch(vertx.dispatcher()) {
+                    val result = master.insertUser()
+
+                    context.response().end(Json.encodePrettily(result))
+                }
+            }
+
+            router.route("/pg/users/insert/:count").handler { context ->
+                val count = context.request().getParam("count").toLong()
+                launch(vertx.dispatcher()) {
+                    val (code, msg) = master.insertUsers(count)
+                    if (code) {
+                        context.response().end(Json.encodePrettily(msg))
+                    } else {
+                        context.response().setStatusCode(500).end(msg)
+                    }
                 }
             }
         }
+
     }
 }
