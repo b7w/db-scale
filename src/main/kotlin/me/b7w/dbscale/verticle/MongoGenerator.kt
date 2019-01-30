@@ -1,5 +1,6 @@
 package me.b7w.dbscale.verticle
 
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.mongo.IndexOptions
 import io.vertx.ext.mongo.MongoClient
 import io.vertx.ext.mongo.MongoClientBulkWriteResult
@@ -16,7 +17,8 @@ class MongoGenerator(val client: MongoClient, val counter: AtomicInteger) {
     suspend fun createCollection() {
         if ("users" !in client.getCollectionsAwait()) {
             client.createCollectionAwait("users")
-            client.createIndexWithOptionsAwait("users", JsonObject("username" to 1), IndexOptions().unique(true))
+            //client.createIndexWithOptionsAwait("users", JsonObject("username" to 1), IndexOptions().unique(true))
+            client.createIndexWithOptionsAwait("users", JsonObject("id" to 1), IndexOptions().unique(true))
         }
     }
 
@@ -33,9 +35,20 @@ class MongoGenerator(val client: MongoClient, val counter: AtomicInteger) {
         return client.bulkWriteAwait("users", params)
     }
 
+    suspend fun select(): JsonObject {
+        val id = Random.nextInt(counter.get()).toString()
+        return client.findOneAwait("users", JsonObject("id" to id), JsonObject())
+    }
+
+    suspend fun select(count: Int): JsonObject {
+        val id = Random.nextInt(count).toString()
+        return client.findOneAwait("users", JsonObject("id" to id), JsonObject())
+    }
+
     suspend fun drop() {
         client.dropCollectionAwait("users")
         createCollection()
+        counter.set(1)
     }
 
     private fun createUser() = JsonObject(

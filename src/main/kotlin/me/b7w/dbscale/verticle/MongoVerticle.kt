@@ -34,15 +34,18 @@ class MongoVerticle(val properties: Properties, val router: Router) : CoroutineV
 
             router.route("/mongo/users/select/").handler { context ->
                 launch(vertx.dispatcher()) {
+                    val result = generator.select()
 
-                    context.response().end(Json.encodePrettily(""))
+                    context.response().end(Json.encodePrettily(result))
                 }
             }
 
             router.route("/mongo/users/select/:count").handler { context ->
                 val c = context.request().getParam("count").toInt()
                 launch(vertx.dispatcher()) {
-                    context.response().end(Json.encodePrettily(c))
+                    val result = generator.select(c)
+
+                    context.response().end(Json.encodePrettily(result))
                 }
             }
 
