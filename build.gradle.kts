@@ -21,6 +21,7 @@ dependencies {
     compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     compile("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     compile("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1")
+
     compile("io.vertx:vertx-core:${vertxVersion}")
     compile("io.vertx:vertx-lang-kotlin:${vertxVersion}")
     compile("io.vertx:vertx-lang-kotlin-coroutines:${vertxVersion}")
@@ -29,6 +30,9 @@ dependencies {
     compile("io.vertx:vertx-config:${vertxVersion}")
     compile("io.vertx:vertx-mongo-client:3.6.2")
     compile("io.reactiverse:reactive-pg-client:0.11.2")
+
+    compile("org.msgpack:msgpack-core:0.8.16")
+    compile("org.msgpack:jackson-dataformat-msgpack:0.8.16")
 
     compile("ch.qos.logback:logback-classic:1.2.3")
     compile("org.apache.logging.log4j:log4j-to-slf4j:2.11.1")

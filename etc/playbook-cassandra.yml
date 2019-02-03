@@ -1,0 +1,103 @@
+---
+- name: Setup VM
+  hosts: all
+  become: yes
+  gather_facts: true
+  vars:
+      - hosts: '{{ groups.all | map("extract", hostvars, ["ansible_default_ipv4", "address"]) | join(",") }}'
+  tasks:
+      - name: Add key
+        apt_key:
+            url: 'https://www.apache.org/dist/cassandra/KEYS'
+            state: present
+
+      - name: Add public key
+        apt_key:
+            keyserver: 'pool.sks-keyservers.net'
+            id: 'A278B781FE4B2BDA'
+            state: present
+
+      - name: Adding Cassandra Debian Repo
+        apt_repository:
+            repo: 'deb http://www.apache.org/dist/cassandra/debian 311x main'
+            state: present
+
+      - name: Remove cassandra
+        apt:
+            name: cassandra
+            state: absent
+            purge: true
+
+      - name: Install cassandra
+        apt:
+            name: cassandra
+            state: present
+            update_cache: yes
+
+      - name: Stop service
+        service:
+            name: cassandra
+            state: stopped
+
+      - name: rm data
+        shell: rm -rf /var/lib/cassandra/data/system/*
+        ignore_errors: yes
+
+      - name: Fill seeds
+        replace:
+            path: '/etc/cassandra/cassandra.yaml'
+            regexp: 'seeds: "127\.0\.0\.1"'
+            replace: 'seeds: "{{ hosts }}"'
+
+      - name: Fill listen_address
+        replace:
+            path: '/etc/cassandra/cassandra.yaml'
+            regexp: 'listen_address: localhost'
+            replace: 'listen_address: {{ ansible_default_ipv4.address }}'
+
+      - name: Fill rpc_address
+        replace:
+            path: '/etc/cassandra/cassandra.yaml'
+            regexp: 'rpc_address: localhost'
+            replace: 'rpc_address: {{ ansible_default_ipv4.address }}'
+
+      - name: Fill rpc_address
+        replace:
+            path: '/etc/cassandra/cassandra.yaml'
+            regexp: 'endpoint_snitch: SimpleSnitch'
+            replace: 'endpoint_snitch: GossipingPropertyFileSnitch'
+
+      - name: Change parameters
+        lineinfile:
+            path: '/etc/cassandra/cassandra.yaml'
+            line: 'auto_bootstrap: false'
+            insertbefore: EOF
+
+      - name: Setup rackdc
+        copy:
+            dest: '/etc/cassandra/cassandra-rackdc.properties'
+            content: |
+                dc=dc{{ groups.all.index(inventory_hostname) + 1 }}
+                rack=rack1
+
+      - name: Rm topology
+        file:
+            path: '/etc/cassandra/cassandra-topology.properties'
+            state: absent
+
+      - name: Start service
+        service:
+            name: cassandra
+            state: started
+
+      - name: Waite
+        pause:
+            seconds: 16
+
+      - name: Check status
+        shell: nodetool status
+        register: status
+
+      - name: Print status
+        debug:
+            var: status.stdout_lines

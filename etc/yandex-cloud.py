@@ -5,7 +5,7 @@ VM = """
 yc compute instance create \
  --name {} \
  --labels type=db \
- --metadata db=cockroachdb \
+ --metadata db=vm \
  --zone ru-central1-{} \
  --cores 2 \
  --memory 8 \
@@ -15,8 +15,7 @@ yc compute instance create \
 """
 
 if __name__ == '__main__':
-    print(sys.argv)
-    if sys.argv[1] == 'cockroach':
-        inst = [('cockroach1', 'a'), ('cockroach2', 'b'), ('cockroach3', 'c')]
+    if sys.argv[1] == 'vm':
+        inst = [('vm1', 'a'), ('vm2', 'b'), ('vm3', 'c')]
         for n, z in inst:
             os.system(VM.format(n, z))
