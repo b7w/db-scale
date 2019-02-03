@@ -32,5 +32,12 @@
         "maxPoolSize": 50,
         "username": "scale",
         "password": "q1w2e3r4"
+    },
+    "cassandra": {
+        "contactPoints": [
+            "host1",
+            "host2",
+            "host3"
+        ]
     }
 }

@@ -28,9 +28,10 @@ dependencies {
     compile("io.vertx:vertx-web:${vertxVersion}")
     compile("io.vertx:vertx-web-client:${vertxVersion}")
     compile("io.vertx:vertx-config:${vertxVersion}")
-    compile("io.vertx:vertx-mongo-client:3.6.2")
-    compile("io.reactiverse:reactive-pg-client:0.11.2")
+    compile("io.vertx:vertx-mongo-client:${vertxVersion}")
+    compile("io.vertx:vertx-cassandra-client:${vertxVersion}")
 
+    compile("io.reactiverse:reactive-pg-client:0.11.2")
     compile("org.msgpack:msgpack-core:0.8.16")
     compile("org.msgpack:jackson-dataformat-msgpack:0.8.16")
 

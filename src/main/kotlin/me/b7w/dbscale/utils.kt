@@ -1,9 +1,13 @@
 package me.b7w.dbscale
 
+import com.datastax.driver.core.Row
+import com.datastax.driver.core.Statement
 import io.reactiverse.pgclient.PgPool
 import io.reactiverse.pgclient.PgRowSet
 import io.reactiverse.pgclient.PgTransaction
 import io.reactiverse.pgclient.Tuple
+import io.vertx.cassandra.CassandraClient
+import io.vertx.cassandra.ResultSet
 import io.vertx.core.logging.Logger
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.kotlin.coroutines.awaitResult
@@ -42,5 +46,17 @@ suspend fun PgTransaction.preparedBatchAwait(sql: String, batch: List<Tuple>): P
 suspend fun PgTransaction.commitAwait() {
     awaitResult<Void> {
         this.commit(it)
+    }
+}
+
+suspend fun CassandraClient.executeAwait(statement: Statement): ResultSet {
+    return awaitResult {
+        this.execute(statement, it)
+    }
+}
+
+suspend fun CassandraClient.executeWithFullFetchAwait(statement: String): List<Row> {
+    return awaitResult {
+        this.executeWithFullFetch(statement, it)
     }
 }

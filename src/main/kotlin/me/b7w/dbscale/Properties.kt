@@ -1,6 +1,7 @@
 package me.b7w.dbscale
 
 import io.reactiverse.pgclient.PgPoolOptions
+import io.vertx.cassandra.CassandraClientOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.json.JsonObject
 import io.vertx.kotlin.config.getConfigAwait
@@ -20,5 +21,10 @@ class Properties(val retriever: ConfigRetriever) {
     suspend fun mongo(): JsonObject? = retriever
         .getConfigAwait()
         .getJsonObject("mongo")
+
+    suspend fun cassandra(): CassandraClientOptions? = retriever
+        .getConfigAwait()
+        .getJsonObject("cassandra")
+        ?.let { CassandraClientOptions(it) }
 
 }

@@ -59,7 +59,13 @@
         replace:
             path: '/etc/cassandra/cassandra.yaml'
             regexp: 'rpc_address: localhost'
-            replace: 'rpc_address: {{ ansible_default_ipv4.address }}'
+            replace: 'rpc_address: 0.0.0.0'
+
+      - name: Fill broadcast_rpc_address
+        replace:
+            path: '/etc/cassandra/cassandra.yaml'
+            regexp: '# broadcast_rpc_address: 1.2.3.4'
+            replace: 'broadcast_rpc_address: 1.2.3.4'
 
       - name: Fill rpc_address
         replace:
