@@ -8,6 +8,13 @@ import io.vertx.kotlin.config.getConfigAwait
 
 class Properties(val retriever: ConfigRetriever) {
 
+    data class ClickHouseOptions(
+        val url: String = "",
+        val database: String = "",
+        val username: String = "",
+        val password: String = ""
+    )
+
     suspend fun pg(): PgPoolOptions? = retriever
         .getConfigAwait()
         .getJsonObject("pg")
@@ -21,6 +28,11 @@ class Properties(val retriever: ConfigRetriever) {
     suspend fun mongo(): JsonObject? = retriever
         .getConfigAwait()
         .getJsonObject("mongo")
+
+    suspend fun clickhouse(): ClickHouseOptions? = retriever
+        .getConfigAwait()
+        .getJsonObject("clickhouse")
+        ?.mapTo(ClickHouseOptions::class.java)
 
     suspend fun cassandra(): CassandraClientOptions? = retriever
         .getConfigAwait()

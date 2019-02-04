@@ -33,6 +33,12 @@
         "username": "scale",
         "password": "q1w2e3r4"
     },
+    "clickhouse": {
+        "url": "https://host1:8443",
+        "database": "root",
+        "username": "root",
+        "password": "q1w2e3r4"
+    },
     "cassandra": {
         "contactPoints": [
             "host1",
