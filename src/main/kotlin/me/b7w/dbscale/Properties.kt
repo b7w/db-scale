@@ -4,7 +4,9 @@ import io.reactiverse.pgclient.PgPoolOptions
 import io.vertx.cassandra.CassandraClientOptions
 import io.vertx.config.ConfigRetriever
 import io.vertx.core.json.JsonObject
+import io.vertx.core.net.SocketAddress
 import io.vertx.kotlin.config.getConfigAwait
+import io.vertx.redis.client.RedisOptions
 
 class Properties(val retriever: ConfigRetriever) {
 
@@ -38,5 +40,13 @@ class Properties(val retriever: ConfigRetriever) {
         .getConfigAwait()
         .getJsonObject("cassandra")
         ?.let { CassandraClientOptions(it) }
+
+    suspend fun redis(): RedisOptions? = retriever
+        .getConfigAwait()
+        .getJsonObject("redis")
+        ?.let {
+            val addr = it.getString("address").split(":")
+            RedisOptions(it).setEndpoint(SocketAddress.inetSocketAddress(addr.get(1).toInt(), addr.get(0)))
+        }
 
 }

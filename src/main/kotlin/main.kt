@@ -3,10 +3,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.Router
 import me.b7w.dbscale.Properties
-import me.b7w.dbscale.verticle.CassandraVerticle
-import me.b7w.dbscale.verticle.ClickHouseVerticle
-import me.b7w.dbscale.verticle.CockroachVerticle
-import me.b7w.dbscale.verticle.PgVerticle
+import me.b7w.dbscale.verticle.*
 
 
 fun main(args: Array<String>) {
@@ -25,6 +22,7 @@ fun main(args: Array<String>) {
     vertx.deployVerticle(CockroachVerticle(config, router))
     vertx.deployVerticle(ClickHouseVerticle(config, router))
     vertx.deployVerticle(CassandraVerticle(config, router))
+    vertx.deployVerticle(RedisVerticle(config, router))
     vertx.createHttpServer().requestHandler(router).listen(8080)
 }
 
