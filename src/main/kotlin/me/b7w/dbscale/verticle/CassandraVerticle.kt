@@ -3,7 +3,6 @@ package me.b7w.dbscale.verticle
 import io.vertx.cassandra.CassandraClient
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
-import io.vertx.kotlin.cassandra.connectAwait
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
@@ -18,7 +17,6 @@ class CassandraVerticle(val properties: Properties, val router: Router) : Corout
 
         if (options != null) {
             val client = CassandraClient.createNonShared(vertx, options)
-            client.connectAwait()
             val generator = CassandraGenerator(client, AtomicInteger(0))
 
             generator.createKeySpace()

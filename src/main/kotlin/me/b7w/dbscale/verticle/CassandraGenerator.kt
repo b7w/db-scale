@@ -5,7 +5,6 @@ import com.datastax.driver.core.SimpleStatement
 import io.vertx.cassandra.CassandraClient
 import io.vertx.kotlin.cassandra.executeAwait
 import me.b7w.dbscale.LOG
-import me.b7w.dbscale.executeAwait
 import me.b7w.dbscale.executeWithFullFetchAwait
 import me.b7w.dbscale.range
 import java.util.*
