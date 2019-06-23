@@ -1,16 +1,35 @@
-version: "3"
+version: "3.7"
 services:
-    db:
-        image: postgres
-        restart: always
+    postgres:
+        image: 'postgres:12-alpine'
         environment:
             POSTGRES_USER: root
             POSTGRES_PASSWORD: q1w2e3r4
         ports:
-            - 5432:5432
+            - '5432:5432'
 
-    adminer:
-        image: adminer
-        restart: always
+    cockroach:
+        image: 'cockroachdb/cockroach:v19.1.2'
         ports:
-            - 9090:8080
+            - '26257:26257'
+        command: 'start --insecure'
+
+    mongo:
+        image: 'mongo:4-xenial'
+        environment:
+            MONGODB_USER: root
+            MONGODB_PASS: q1w2e3r4
+        ports:
+            - '26257:26257'
+        command: 'start --insecure'
+
+    cassandra:
+        image: 'cassandra:3'
+        ports:
+            - '27017:27017'
+        command: 'start --insecure'
+
+    redis:
+        image: 'redis:5-alpine'
+        ports:
+            - '6379:6379'

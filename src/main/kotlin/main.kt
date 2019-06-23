@@ -3,7 +3,7 @@ import io.vertx.core.Vertx
 import io.vertx.core.logging.LoggerFactory
 import io.vertx.ext.web.Router
 import me.b7w.dbscale.Properties
-import me.b7w.dbscale.verticle.*
+import me.b7w.dbscale.verticle.AdapterVerticle
 
 
 fun main(args: Array<String>) {
@@ -17,12 +17,12 @@ fun main(args: Array<String>) {
 
     val router = Router.router(vertx)
 
-    vertx.deployVerticle(PgVerticle(config, router))
-    vertx.deployVerticle(CockroachVerticle(config, router))
-    vertx.deployVerticle(CockroachVerticle(config, router))
-    vertx.deployVerticle(ClickHouseVerticle(config, router))
-    vertx.deployVerticle(CassandraVerticle(config, router))
-    vertx.deployVerticle(RedisVerticle(config, router))
+    vertx.deployVerticle(AdapterVerticle(config, router))
+//    vertx.deployVerticle(CockroachVerticle(config, router))
+//    vertx.deployVerticle(CockroachVerticle(config, router))
+//    vertx.deployVerticle(ClickHouseVerticle(config, router))
+//    vertx.deployVerticle(CassandraVerticle(config, router))
+//    vertx.deployVerticle(RedisVerticle(config, router))
     vertx.createHttpServer().requestHandler(router).listen(8080)
 }
 
