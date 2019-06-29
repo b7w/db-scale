@@ -31,11 +31,6 @@ class Properties(val retriever: ConfigRetriever) {
         .getConfigAwait()
         .getJsonObject("mongo")
 
-    suspend fun clickhouse(): ClickHouseOptions? = retriever
-        .getConfigAwait()
-        .getJsonObject("clickhouse")
-        ?.mapTo(ClickHouseOptions::class.java)
-
     suspend fun cassandra(): CassandraClientOptions? = retriever
         .getConfigAwait()
         .getJsonObject("cassandra")
@@ -46,7 +41,6 @@ class Properties(val retriever: ConfigRetriever) {
         .getJsonObject("scylla")
         ?.let { CassandraClientOptions(it) }
 
-
     suspend fun redis(): RedisOptions? = retriever
         .getConfigAwait()
         .getJsonObject("redis")
@@ -54,5 +48,11 @@ class Properties(val retriever: ConfigRetriever) {
             val addr = it.getString("address").split(":")
             RedisOptions(it).setEndpoint(SocketAddress.inetSocketAddress(addr.get(1).toInt(), addr.get(0)))
         }
+
+    suspend fun clickhouse(): ClickHouseOptions? = retriever
+        .getConfigAwait()
+        .getJsonObject("clickhouse")
+        ?.mapTo(ClickHouseOptions::class.java)
+
 
 }

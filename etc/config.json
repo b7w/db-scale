@@ -15,8 +15,19 @@
         "user": "root",
         "password": "q1w2e3r4",
         "cachePreparedStatements": true,
-        "maxSize": 10,
+        "maxSize": 16,
         "ssl": false
+    },
+    "mongo": {
+        "db_name": "root",
+        "hosts": [
+            {
+                "host": "192.168.99.100",
+                "port": 27017
+            }
+        ],
+        "minPoolSize": 8,
+        "maxPoolSize": 16
     },
     "cassandra": {
         "port": 9042,
@@ -32,5 +43,8 @@
     },
     "redis": {
         "address": "192.168.99.100:6379"
+    },
+    "clickhouse": {
+        "url": "http://192.168.99.100:8123"
     }
 }

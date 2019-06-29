@@ -18,7 +18,8 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
             CassandraAdapter(properties),
             MongoAdapter(properties),
             ScyllaAdapter(properties),
-            RedisAdapter(properties)
+            RedisAdapter(properties),
+            ClickHouseAdapter(properties)
         ).map { it.name() to it }.toMap()
 
         router.route("/:adapter/find-one").handler { context ->
