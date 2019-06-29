@@ -1,9 +1,6 @@
 package me.b7w.dbscale.adapter
 
-import io.reactiverse.pgclient.PgClient
-import io.reactiverse.pgclient.PgException
-import io.reactiverse.pgclient.PgPool
-import io.reactiverse.pgclient.Tuple
+import io.reactiverse.pgclient.*
 import io.vertx.core.Vertx
 import me.b7w.dbscale.Properties
 import me.b7w.dbscale.preparedQueryAwait
@@ -16,9 +13,11 @@ open class PostgresAdapter(val properties: Properties) : IAdapter {
 
     override suspend fun name(): String = "postgres"
 
+    open suspend fun clientOptions(): PgPoolOptions? = properties.pg()
+
     override suspend fun connect(vertx: Vertx) {
         if (client == null) {
-            val options = properties.pg()
+            val options = clientOptions()
             if (options != null) {
                 client = PgClient.pool(vertx, options)
                 client.getOrFail().queryAwait(
