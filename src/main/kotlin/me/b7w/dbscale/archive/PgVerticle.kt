@@ -1,4 +1,4 @@
-package me.b7w.dbscale.verticle
+package me.b7w.dbscale.archive
 
 import io.reactiverse.pgclient.PgClient
 import io.reactiverse.pgclient.PgPoolOptions

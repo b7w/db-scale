@@ -1,4 +1,4 @@
-package me.b7w.dbscale.verticle
+package me.b7w.dbscale.archive
 
 import com.datastax.driver.core.BatchStatement
 import com.datastax.driver.core.SimpleStatement

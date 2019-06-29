@@ -1,4 +1,4 @@
-package me.b7w.dbscale.verticle
+package me.b7w.dbscale.archive
 
 import io.vertx.kotlin.core.json.get
 import io.vertx.kotlin.core.json.jsonObjectOf

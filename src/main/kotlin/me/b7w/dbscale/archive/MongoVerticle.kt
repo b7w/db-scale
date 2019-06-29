@@ -1,4 +1,4 @@
-package me.b7w.dbscale.verticle
+package me.b7w.dbscale.archive
 
 import io.vertx.core.json.Json
 import io.vertx.ext.mongo.MongoClient
