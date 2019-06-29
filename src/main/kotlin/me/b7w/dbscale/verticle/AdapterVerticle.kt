@@ -4,6 +4,7 @@ import io.vertx.ext.web.Router
 import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
+import me.b7w.dbscale.LOG
 import me.b7w.dbscale.Properties
 import me.b7w.dbscale.adapter.*
 
@@ -31,6 +32,7 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
                     val result = adapter.findOne()
                     context.response().end(result.toString())
                 } catch (e: Exception) {
+                    LOG.error(e.message, e)
                     context.response().end(e.message)
                 }
             }
@@ -45,6 +47,7 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
                     adapter.removeAll()
                     context.response().end("Ok")
                 } catch (e: Exception) {
+                    LOG.error(e.message, e)
                     context.response().end(e.message)
                 }
             }

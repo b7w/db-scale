@@ -2,8 +2,9 @@ package me.b7w.dbscale.adapter
 
 import io.reactiverse.pgclient.Tuple
 import io.vertx.core.Vertx
+import io.vertx.core.buffer.Buffer
 import io.vertx.ext.web.client.WebClient
-import io.vertx.kotlin.ext.web.client.sendAwait
+import io.vertx.kotlin.ext.web.client.sendBufferAwait
 import me.b7w.dbscale.Properties
 
 
@@ -15,13 +16,18 @@ class ClickHouseAdapter(val properties: Properties) : IAdapter {
 
         suspend fun execute(sql: String): String {
             val response = web
-                .getAbs(options.url)
+                .postAbs(options.url)
                 .addQueryParam("database", options.database)
-                .addQueryParam("query", sql)
                 .putHeader("X-ClickHouse-User", options.username)
                 .putHeader("X-ClickHouse-Key", options.password)
-                .sendAwait()
-            return response.bodyAsString()
+                .sendBufferAwait(Buffer.buffer(sql).appendString("\n"))
+            if (response.statusCode() != 200) {
+                throw Exception(response.bodyAsString())
+            }
+            if (response.body() != null && response.body().length() > 0) {
+                return response.bodyAsString()
+            }
+            return "Ok"
         }
 
     }
@@ -34,7 +40,18 @@ class ClickHouseAdapter(val properties: Properties) : IAdapter {
             if (options != null) {
                 client = ClickHouseClient(WebClient.create(vertx), options)
                 val sample = sampleData(sampleKey())
-                client.getOrFail().execute("SELECT now()")
+                client.getOrFail()
+                    .execute(
+                        """
+                        CREATE TABLE IF NOT EXISTS sample (id String, value String)
+                        ENGINE = MergeTree ORDER BY id
+                        """
+                    )
+                val count = client.getOrFail().execute("SELECT count(id) FROM sample WHERE id = '${sample.key}'")
+                if ("0" == count.trim()) {
+                    client.getOrFail()
+                        .execute("INSERT INTO sample VALUES ('${sample.key}', '${sample.value}')")
+                }
             } else {
                 throw Exception("Config not found")
             }
@@ -42,12 +59,13 @@ class ClickHouseAdapter(val properties: Properties) : IAdapter {
     }
 
     override suspend fun findOne(): Tuple {
-        val result = client.getOrFail().execute("SELECT now()")
-        return Tuple.of(sampleKey(), result)
+        val id = sampleKey()
+        val result = client.getOrFail().execute("SELECT value FROM sample WHERE id = '$id'").trim()
+        return Tuple.of(id, result)
     }
 
     override suspend fun removeAll() {
-        throw NotImplementedError()
+        client.getOrFail().execute("DROP DATABASE IF EXISTS sample")
     }
 
 }

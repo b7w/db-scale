@@ -12,7 +12,7 @@ class Properties(val retriever: ConfigRetriever) {
 
     data class ClickHouseOptions(
         val url: String = "",
-        val database: String = "",
+        val database: String = "default",
         val username: String = "",
         val password: String = ""
     )
