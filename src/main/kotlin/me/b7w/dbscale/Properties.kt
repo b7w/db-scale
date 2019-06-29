@@ -41,6 +41,12 @@ class Properties(val retriever: ConfigRetriever) {
         .getJsonObject("cassandra")
         ?.let { CassandraClientOptions(it) }
 
+    suspend fun scylla(): CassandraClientOptions? = retriever
+        .getConfigAwait()
+        .getJsonObject("scylla")
+        ?.let { CassandraClientOptions(it) }
+
+
     suspend fun redis(): RedisOptions? = retriever
         .getConfigAwait()
         .getJsonObject("redis")

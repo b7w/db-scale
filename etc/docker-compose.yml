@@ -27,6 +27,11 @@ services:
         ports:
             - '9042:9042'
 
+    scylla:
+        image: 'scylladb/scylla:3.0.7'
+        ports:
+            - '9042:9042'
+
     redis:
         image: 'redis:5-alpine'
         ports:
