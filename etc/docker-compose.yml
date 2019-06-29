@@ -20,14 +20,12 @@ services:
             MONGODB_USER: root
             MONGODB_PASS: q1w2e3r4
         ports:
-            - '26257:26257'
-        command: 'start --insecure'
+            - '27017:27017'
 
     cassandra:
         image: 'cassandra:3'
         ports:
-            - '27017:27017'
-        command: 'start --insecure'
+            - '9042:9042'
 
     redis:
         image: 'redis:5-alpine'

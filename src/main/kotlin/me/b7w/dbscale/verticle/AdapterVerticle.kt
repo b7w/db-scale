@@ -5,10 +5,7 @@ import io.vertx.kotlin.coroutines.CoroutineVerticle
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.launch
 import me.b7w.dbscale.Properties
-import me.b7w.dbscale.adapter.CockroachAdapter
-import me.b7w.dbscale.adapter.IAdapter
-import me.b7w.dbscale.adapter.PostgresAdapter
-import me.b7w.dbscale.adapter.RedisAdapter
+import me.b7w.dbscale.adapter.*
 
 
 class AdapterVerticle(val properties: Properties, val router: Router) : CoroutineVerticle() {
@@ -18,6 +15,7 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
         val adapters: Map<String, IAdapter> = listOf(
             PostgresAdapter(properties),
             CockroachAdapter(properties),
+            CassandraAdapter(properties),
             RedisAdapter(properties)
         ).map { it.name() to it }.toMap()
 
