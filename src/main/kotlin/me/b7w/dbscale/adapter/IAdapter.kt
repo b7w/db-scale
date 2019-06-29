@@ -22,14 +22,15 @@ interface IAdapter {
 
     fun sampleData(key: String = UUID.randomUUID().toString()) = Sample(
         key,
-        jsonObjectOf("value" to UUID.randomUUID().toString())
+        jsonObjectOf("sample" to UUID.randomUUID().toString())
     )
 
     suspend fun name(): String
 
+    suspend fun connect(vertx: Vertx)
+
     suspend fun findOne(): Tuple
 
-
     suspend fun removeAll()
-    suspend fun connect(vertx: Vertx)
+
 }

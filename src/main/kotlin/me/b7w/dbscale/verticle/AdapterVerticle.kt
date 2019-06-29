@@ -16,6 +16,7 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
             PostgresAdapter(properties),
             CockroachAdapter(properties),
             CassandraAdapter(properties),
+            MongoAdapter(properties),
             ScyllaAdapter(properties),
             RedisAdapter(properties)
         ).map { it.name() to it }.toMap()
@@ -24,7 +25,7 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
             launch(vertx.dispatcher()) {
                 val name = context.request().getParam("adapter")
                 try {
-                    val adapter = adapters.getOrElse(name) { throw Exception("No adapter found")}
+                    val adapter = adapters.getOrElse(name) { throw Exception("No adapter found") }
                     adapter.connect(vertx)
                     val result = adapter.findOne()
                     context.response().end(result.toString())
@@ -38,10 +39,10 @@ class AdapterVerticle(val properties: Properties, val router: Router) : Coroutin
             launch(vertx.dispatcher()) {
                 val name = context.request().getParam("adapter")
                 try {
-                    val adapter = adapters.get(name)!!
+                    val adapter = adapters.getOrElse(name) { throw Exception("No adapter found") }
                     adapter.connect(vertx)
-                    val result = adapter.removeAll()
-                    context.response().end(result.toString())
+                    adapter.removeAll()
+                    context.response().end("Ok")
                 } catch (e: Exception) {
                     context.response().end(e.message)
                 }
